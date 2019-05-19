@@ -5,7 +5,7 @@
 * Debugging to this point was a pain in the neck
 * It was so satisfying when it finally worked
 
-![image](readme_content/progress_5.18.19/now_thats_more_like_it.jpg)
+![image](readme_content/progress_5.18.19/now_thats_more_like_it2.jpg)
 
 ## May 17th 2019
 * First attempt at PWM
