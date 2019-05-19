@@ -1,6 +1,13 @@
+void singleCycle () {
+  for (int step = 1; step < stepsPerCycle - 1; step++) {
+    // latchPin LOW before ShiftOut, HIGH after
+    digitalWrite(latchPin, 0);
+    shiftOut(dataPin, clockPin, cycle[step], srCount);
+    digitalWrite(latchPin, 1);
+  }
+}
 
-
-void pwm_single_led_constant_color (HardwareSerial *s) {
+void convertToCycle (int _colors[16][3], int _cycle[11][6], HardwareSerial *s) {
   //  Converts Array of integer RGB Values (one for each LED)
   //  into an array of bytes (one for each shift register for each step)
   //  and indefinetly shiftOut each step within the cycle
@@ -54,22 +61,7 @@ void pwm_single_led_constant_color (HardwareSerial *s) {
     RGB values down to their compressed values.
   */
 
-  // Number of shift registers (must be divisible by three)
-  // Number of LEDs is determined by the number of shift registers
-  int srCount = 6;
-  int ledCount = srCount / 3 * 8;
 
-  // Increase  - reduces flicker AND possible LED colors
-  // Descrease - increases flicker AND possible LED colors
-  int colorCompressionFactor = 20;  //
-  int stepsPerCycle = 255 / colorCompressionFactor;
-
-  // # LED color pins = # Shift register OUT pins
-  // pinCount is also the number of bits needed to define a single step
-  int pinCount = ledCount * 3;
-
-  // Enable (1) of Disable (0) Serial printing
-  int debugPrinting = 0;
 
   // Define Variables
   int led, pin, step, this_pin;
@@ -83,15 +75,7 @@ void pwm_single_led_constant_color (HardwareSerial *s) {
     http://www.perbang.dk/rgbgradient/
     Color 1 = 35ACE9, Color 2 = BF001A
   */
-  int rgbColors[ledCount][3] = {
-    {53, 172, 233}, { 45, 138, 230},
-    {44, 104, 227}, { 40,  69, 224},
-    {39,  36, 221}, { 66,  33, 219},
-    {94,  29, 216}, {122,  25, 213},
-    {151, 22, 210}, {180,  18, 207},
-    {205, 15, 200}, {202,  12, 166},
-    {199,  9, 131}, {196,   5,  96},
-    {193,  2,  61}, {191,   0,  40}};
+
 
   // Flatten rgbColors[][] into pinValues[]
   /*
@@ -101,7 +85,7 @@ void pwm_single_led_constant_color (HardwareSerial *s) {
   for (led = 0; led < ledCount; led++) {
     for (pin = 0; pin < 3; pin++) {
       this_pin = (led * 3) + pin;
-      pinValues[this_pin] = rgbColors[led][pin] / colorCompressionFactor;
+      pinValues[this_pin] = _colors[led][pin] / colorCompressionFactor;
     }
   };
 
@@ -130,7 +114,7 @@ void pwm_single_led_constant_color (HardwareSerial *s) {
 
       // After the shift registers last pin, store srValue in srBytes
       if (srPin == 7) {
-        srBytes[step][shiftRegister] = srValue;
+        _cycle[step][shiftRegister] = srValue;
       }
 
     }
@@ -138,65 +122,55 @@ void pwm_single_led_constant_color (HardwareSerial *s) {
 
   // Print value if debugging
   if (debugPrinting == 1) {
-    Serial.println("--DEBUGGING------------------");
-
-    Serial.print("stepsPerCycle = "); Serial.println(stepsPerCycle);
-
-    // Print RGB Color Values
-    Serial.print("rgbColors {");
-    for (int led = 0; led < 16; led++)   {
-      Serial.print("{");  Serial.print(rgbColors[led][0]);
-      Serial.print(", "); Serial.print(rgbColors[led][1]);
-      Serial.print(", "); Serial.print(rgbColors[led][2]);
-      Serial.print("} ");
-    }
-    Serial.println("} "); Serial.println(' ');
-
-    // Print the pinValues
-    Serial.print("pinValues  {");
-    for (int pin = 0; pin < 47; pin++)   {
-      Serial.print(pinValues[pin]); Serial.print(", ");
-    }
-    Serial.print(pinValues[47]); Serial.println("} ");
-
-
-    // Print the Shift Register Byters
-    Serial.println("srBytes");
-    for (step = 0; step < stepsPerCycle; step++) {
-      Serial.print(step);
-      Serial.print(" { ");
-      for (int r = 0; r < srCount; r++) {
-        Serial.print(srBytes[step][r]);
-        Serial.print(" ");
-      }
-      Serial.print(" }  { ");
-      for (int r = 0; r < srCount; r++) {
-        byte mask;
-        byte data = srBytes[step][r];
-        for (mask = 10000000; mask>0; mask >>= 1) { //iterate through bit mask
-          if (data & mask){ // if bitwise AND resolves to true
-            Serial.print(1); // send 1
-          }
-          else{ //if bitwise and resolves to false
-            Serial.print(0); // send 0
-          }
-        }
-        Serial.print(" ");
-      }
-      Serial.println(" }");
-    }
-    Serial.println("-----------------------------");
+    // Serial.println("--DEBUGGING------------------");
+    //
+    // Serial.print("stepsPerCycle = "); Serial.println(stepsPerCycle);
+    //
+    // // Print RGB Color Values
+    // Serial.print("rgbColors {");
+    // for (int led = 0; led < 16; led++)   {
+    //   Serial.print("{");  Serial.print(rgbColors[led][0]);
+    //   Serial.print(", "); Serial.print(rgbColors[led][1]);
+    //   Serial.print(", "); Serial.print(rgbColors[led][2]);
+    //   Serial.print("} ");
+    // }
+    // Serial.println("} "); Serial.println(' ');
+    //
+    // // Print the pinValues
+    // Serial.print("pinValues  {");
+    // for (int pin = 0; pin < 47; pin++)   {
+    //   Serial.print(pinValues[pin]); Serial.print(", ");
+    // }
+    // Serial.print(pinValues[47]); Serial.println("} ");
+    //
+    //
+    // // Print the Shift Register Byters
+    // Serial.println("srBytes");
+    // for (step = 0; step < stepsPerCycle; step++) {
+    //   Serial.print(step);
+    //   Serial.print(" { ");
+    //   for (int r = 0; r < srCount; r++) {
+    //     Serial.print(srBytes[step][r]);
+    //     Serial.print(" ");
+    //   }
+    //   Serial.print(" }  { ");
+    //   for (int r = 0; r < srCount; r++) {
+    //     byte mask;
+    //     byte data = srBytes[step][r];
+    //     for (mask = 10000000; mask>0; mask >>= 1) { //iterate through bit mask
+    //       if (data & mask){ // if bitwise AND resolves to true
+    //         Serial.print(1); // send 1
+    //       }
+    //       else{ //if bitwise and resolves to false
+    //         Serial.print(0); // send 0
+    //       }
+    //     }
+    //     Serial.print(" ");
+    //   }
+    //   Serial.println(" }");
+    // }
+    // Serial.println("-----------------------------");
   }
 
-  // Loop here indefinetly once everythings loaded
-  while (1 == 1) {
 
-    // shiftOut one step at a time
-    for (step = 1; step < stepsPerCycle - 1; step++) {
-      // latchPin LOW before ShiftOut, HIGH after
-      digitalWrite(latchPin, 0);
-      shiftOut(dataPin, clockPin, srBytes[step], srCount);
-      digitalWrite(latchPin, 1);
-    }
-  }
 }

@@ -1,14 +1,3 @@
-//**************************************************************//
-//  Name    : shiftOutCode, Dual Binary Counters                 //
-//  Author  : Carlyn Maw, Tom Igoe                               //
-//  Date    : 25 Oct, 2006                                       //
-//  Version : 1.0                                                //
-//  Notes   : Code for using a 74HC595 Shift Register            //
-//          : to count from 0 to 255                             //
-//**************************************************************//
-
-//#include <color-bounce.ino>
-
 //Pin connected to ST_CP of 74HC595
 int latchPin = 8;
 //Pin connected to SH_CP of 74HC595
@@ -16,61 +5,75 @@ int clockPin = 12;
 //Pin connected to DS of 74HC595
 int dataPin = 11;
 
+// Enable (1) of Disable (0) Serial printing
+int debugPrinting = 0;
 
+// Number of shift registers (must be divisible by three)
+// Number of LEDs is determined by the number of shift registers
+int srCount = 6;
+int ledCount = 18; // ledCount = srCount / 3 * 8
+int pinCount = ledCount * 3;
+
+// Increase  - reduces flicker AND possible LED colors
+// Descrease - increases flicker AND possible LED colors
+int colorCompressionFactor = 20;
+int stepsPerCycle = 11; // = 255 / colorCompressionFactor;
+
+// pallete[ledCount][3]
+int pallete[18][3];
+
+// cycle[stepsPerCycle][srCount]
+int cycle[11][6];
 
 void setup() {
   //Start Serial for debuging purposes
   Serial.begin(9600);
+
   //set pins to output because they are addressed in the main loop
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
 
-  Serial.begin(9600);
-
-
+  // Turn off all LEDs
   clearShiftRegisters();
 
-  int a = 0;
-  a = a | (1 << 0);
-  a = a | (1 << 1);
-  a = a | (1 << 2);
-  Serial.print(a);
+  // Load a color gradiant
+  getGradient(1, pallete);
+
+  // Convert it to a cycle
+  convertToCycle(pallete, cycle, &Serial);
+
+}
+
+void loop() {
+  singleCycle ();
+  //color_bounce();
 }
 
 void clearShiftRegisters() {
+  // 255 if the off value for an entire shift register
+  int shiftOff[srCount];
+  for (int x = 0; x < srCount; x++) {
+    shiftOff[x] = 255;
+  }
 
-  int shiftOff[6] = {255, 255, 255, 255, 255, 255};
-
+  // open latch, shift out shift register values, close latch
   digitalWrite(latchPin, 0);
-    shiftOut(dataPin, clockPin, shiftOff, 6);
+  shiftOut(dataPin, clockPin, shiftOff, 6);
   digitalWrite(latchPin, 1);
 
-
 }
-
-
-
-void loop() {
-
-
-  //color_bounce();
-  pwm_single_led_constant_color(&Serial);
-  //pwm_constant_color(&Serial);
-  // for (int x = 0; x < 255; x++) {
-  //   digitalWrite(latchPin, 0);
-  //    shiftOut(dataPin, clockPin, 64);
-  //    digitalWrite(latchPin, 1);
-  //    delay(10);
-  // }
-
-
-}
-
-
 
 
 void shiftOut(int myDataPin, int myClockPin, int myDataOut[], int arraySize) {
+  //**************************************************************//
+  //  Author  : Carlyn Maw, Tom Igoe                               //
+  //  Date    : 25 Oct, 2006                                       //
+  //  Version : 1.0                                                //
+  //  Notes   : Code for using a 74HC595 Shift Register            //
+  //          : to count from 0 to 255                             //
+  //**************************************************************//
+
   // This shifts 8 bits out MSB first,
   //on the rising edge of the clock,
   //clock idles low
