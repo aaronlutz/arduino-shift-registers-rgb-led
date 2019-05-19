@@ -79,17 +79,21 @@ void pwm_constant_color (HardwareSerial *s) {
     }
   };
 
-  for (int xxx = 0; xxx < 100; xxx++) {
-    for (int st = 0; st < stepsPerCycle; st++) {
-      digitalWrite(latchPin, 0);
 
-      for (int r = 0; r < srCount; r++) {
-        shiftOut(dataPin, clockPin, srBytes[st][r]);
+  while (1 == 1) {
+    for (int xxx = 0; xxx < 100; xxx++) {
+      for (int st = 0; st < stepsPerCycle; st++) {
+        digitalWrite(latchPin, 0);
+
+        for (int r = srCount - 1; r >= 0; r--) {
+          shiftOut(dataPin, clockPin, srBytes[st], srCount);
+        }
+
+        digitalWrite(latchPin, 1);
 
       }
-
-      digitalWrite(latchPin, 1);
-
     }
   }
+
+
 }

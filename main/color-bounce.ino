@@ -192,11 +192,11 @@ void color_bounce() {
 
 void shiftSet(int myDataPin, int MyClockPin, int shiftRow[8]) {
   digitalWrite(latchPin, 0);
-  shiftOut(dataPin, clockPin, shiftRow[0]);
-  shiftOut(dataPin, clockPin, shiftRow[1]);
-  shiftOut(dataPin, clockPin, shiftRow[2]);
-  shiftOut(dataPin, clockPin, shiftRow[3]);
-  shiftOut(dataPin, clockPin, shiftRow[4]);
-  shiftOut(dataPin, clockPin, shiftRow[5]);
+  // shiftOut(dataPin, clockPin, shiftRow[0]);
+  // shiftOut(dataPin, clockPin, shiftRow[1]);
+  // shiftOut(dataPin, clockPin, shiftRow[2]);
+  // shiftOut(dataPin, clockPin, shiftRow[3]);
+  // shiftOut(dataPin, clockPin, shiftRow[4]);
+  // shiftOut(dataPin, clockPin, shiftRow[5]);
   digitalWrite(latchPin, 1);
 }
