@@ -5,13 +5,13 @@
 * Debugging to this point was a pain in the neck
 * It was so satisfying when it finally worked
 
-![](readme_content/progress_9.18.19/now_thats_more_like_it.jpg)
+![image](readme_content/progress_5.18.19/now_thats_more_like_it.jpg)
 
 ## May 17th 2019
 * First attempt at PWM
 * That's not quite right...
 
-![](readme_content/progress_9.17.19/thats_not_pwm.jpg)
+![image](readme_content/progress_5.17.19/thats_not_pwm.gif)
 
 ## May 15th 2019
 * Project Added to GitHub
@@ -30,13 +30,13 @@
 * I plan to add PMW to open up the full RGB colors space
 
 ### Current Setup
-![](readme_content/progress_9.15.19/IMG_20190515_202632__01.jpg)
+![image](readme_content/progress_5.15.19/IMG_20190515_202632__01.jpg)
 
 May 15th
 
 
 
 ### Function
-![](readme_content/progress_9.15.19/progress_at_initial_commit.gif)
+![gif](readme_content/progress_5.15.19/progress_at_initial_commit.gif)
 
 April 16th
