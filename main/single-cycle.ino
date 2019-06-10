@@ -1,13 +1,16 @@
-void singleCycle () {
-  for (int step = 1; step < stepsPerCycle - 1; step++) {
+void singleCycle (int stepsPerCycle, int _cycle[][6]) {
+
+  for (int step = 0; step < stepsPerCycle; step++) {
+
     // latchPin LOW before ShiftOut, HIGH after
     digitalWrite(latchPin, 0);
-    shiftOut(dataPin, clockPin, cycle[step], srCount);
+    shiftOut(dataPin, clockPin, _cycle[step], srCount);
     digitalWrite(latchPin, 1);
   }
 }
 
-void convertToCycle (int _colors[16][3], int _cycle[11][6], HardwareSerial *s) {
+void convertToCycle (int _colors[16][3], int _cycle[][6], HardwareSerial *s,
+  int stepsPerCycle, int compression_factor) {
   //  Converts Array of integer RGB Values (one for each LED)
   //  into an array of bytes (one for each shift register for each step)
   //  and indefinetly shiftOut each step within the cycle
@@ -70,11 +73,6 @@ void convertToCycle (int _colors[16][3], int _cycle[11][6], HardwareSerial *s) {
   int pinValues[pinCount];
   int srBytes[stepsPerCycle][srCount];
 
-  // 16 step color gradiant
-  /*
-    http://www.perbang.dk/rgbgradient/
-    Color 1 = 35ACE9, Color 2 = BF001A
-  */
 
 
   // Flatten rgbColors[][] into pinValues[]
@@ -85,7 +83,21 @@ void convertToCycle (int _colors[16][3], int _cycle[11][6], HardwareSerial *s) {
   for (led = 0; led < ledCount; led++) {
     for (pin = 0; pin < 3; pin++) {
       this_pin = (led * 3) + pin;
-      pinValues[this_pin] = _colors[led][pin] / colorCompressionFactor;
+      pinValues[this_pin] = (float)_colors[led][pin] / (float)255 * (float)stepsPerCycle;
+
+      Serial.print("led ");
+      Serial.print(led);
+      Serial.print("\tpin ");
+      Serial.print(pin);
+      Serial.print("\tthis_pin ");
+      Serial.print(this_pin);
+      Serial.print("\t_colors[led][pin]");
+      Serial.print((float)_colors[led][pin]);
+      Serial.print("\tstepsPerCycle");
+      Serial.print((float)stepsPerCycle);
+      Serial.print("\tpinValues[this_pin]");
+      Serial.println(pinValues[this_pin]);
+
     }
   };
 
@@ -116,60 +128,59 @@ void convertToCycle (int _colors[16][3], int _cycle[11][6], HardwareSerial *s) {
       if (srPin == 7) {
         _cycle[step][shiftRegister] = srValue;
       }
-
     }
   }
 
-  // Print value if debugging
-  if (debugPrinting == 1) {
-    // Serial.println("--DEBUGGING------------------");
-    //
-    // Serial.print("stepsPerCycle = "); Serial.println(stepsPerCycle);
-    //
-    // // Print RGB Color Values
-    // Serial.print("rgbColors {");
-    // for (int led = 0; led < 16; led++)   {
-    //   Serial.print("{");  Serial.print(rgbColors[led][0]);
-    //   Serial.print(", "); Serial.print(rgbColors[led][1]);
-    //   Serial.print(", "); Serial.print(rgbColors[led][2]);
-    //   Serial.print("} ");
-    // }
-    // Serial.println("} "); Serial.println(' ');
-    //
-    // // Print the pinValues
-    // Serial.print("pinValues  {");
-    // for (int pin = 0; pin < 47; pin++)   {
-    //   Serial.print(pinValues[pin]); Serial.print(", ");
-    // }
-    // Serial.print(pinValues[47]); Serial.println("} ");
-    //
-    //
-    // // Print the Shift Register Byters
-    // Serial.println("srBytes");
-    // for (step = 0; step < stepsPerCycle; step++) {
-    //   Serial.print(step);
-    //   Serial.print(" { ");
-    //   for (int r = 0; r < srCount; r++) {
-    //     Serial.print(srBytes[step][r]);
-    //     Serial.print(" ");
-    //   }
-    //   Serial.print(" }  { ");
-    //   for (int r = 0; r < srCount; r++) {
-    //     byte mask;
-    //     byte data = srBytes[step][r];
-    //     for (mask = 10000000; mask>0; mask >>= 1) { //iterate through bit mask
-    //       if (data & mask){ // if bitwise AND resolves to true
-    //         Serial.print(1); // send 1
-    //       }
-    //       else{ //if bitwise and resolves to false
-    //         Serial.print(0); // send 0
-    //       }
-    //     }
-    //     Serial.print(" ");
-    //   }
-    //   Serial.println(" }");
-    // }
-    // Serial.println("-----------------------------");
+  if (1==1) {
+
+    Serial.println("--DEBUGGING------------------");
+
+    Serial.print("stepsPerCycle = "); Serial.println(stepsPerCycle);
+
+    // Print RGB Color Values
+    Serial.print("rgbColors {");
+    for (int led = 0; led < 16; led++)   {
+      Serial.print("{");  Serial.print(_colors[led][0]);
+      Serial.print(", "); Serial.print(_colors[led][1]);
+      Serial.print(", "); Serial.print(_colors[led][2]);
+      Serial.print("} ");
+    }
+    Serial.println("} "); Serial.println(' ');
+
+    // Print the pinValues
+    Serial.print("pinValues  {");
+    for (int pin = 0; pin < 47; pin++)   {
+      Serial.print(pinValues[pin]); Serial.print(", ");
+    }
+    Serial.print(pinValues[47]); Serial.println("} ");
+
+
+    // Print the Shift Register Byters
+    Serial.println("srBytes");
+    for (step = 0; step < stepsPerCycle; step++) {
+      Serial.print(step);
+      Serial.print(" { ");
+      for (int r = 0; r < srCount; r++) {
+        Serial.print(_cycle[step][r]);
+        Serial.print(" ");
+      }
+      Serial.print(" }  { ");
+      for (int r = 0; r < srCount; r++) {
+        byte mask;
+        byte data = _cycle[step][r];
+        for (mask = 10000000; mask>0; mask >>= 1) { //iterate through bit mask
+          if (data & mask){ // if bitwise AND resolves to true
+            Serial.print(1); // send 1
+          }
+          else{ //if bitwise and resolves to false
+            Serial.print(0); // send 0
+          }
+        }
+        Serial.print(" ");
+      }
+      Serial.println(" }");
+    }
+    Serial.println("-----------------------------");
   }
 
 

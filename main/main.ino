@@ -4,26 +4,34 @@ int latchPin = 8;
 int clockPin = 12;
 //Pin connected to DS of 74HC595
 int dataPin = 11;
+// Pin connected to potentiometer
+int analog_pin = 0;
+// round potentiometer input to the nearest N
+int round_to = 10;
 
 // Enable (1) of Disable (0) Serial printing
 int debugPrinting = 0;
+
+int first_lap_indicator = 0;
+int prev_potentiometer_reading;
 
 // Number of shift registers (must be divisible by three)
 // Number of LEDs is determined by the number of shift registers
 int srCount = 6;
 int ledCount = 18; // ledCount = srCount / 3 * 8
 int pinCount = ledCount * 3;
+int prev_steps_per_cycle = 0;
 
 // Increase  - reduces flicker AND possible LED colors
 // Descrease - increases flicker AND possible LED colors
-int colorCompressionFactor = 20;
-int stepsPerCycle = 11; // = 255 / colorCompressionFactor;
+// int colorCompressionFactor = 20;
+//// int stepsPerCycle = 11; // = 255 / colorCompressionFactor;
 
 // pallete[ledCount][3]
 int pallete[18][3];
 
 // cycle[stepsPerCycle][srCount]
-int cycle[11][6];
+////int cycle[11][6];
 
 void setup() {
   //Start Serial for debuging purposes
@@ -40,15 +48,63 @@ void setup() {
   // Load a color gradiant
   getGradient(1, pallete);
 
-  // Convert it to a cycle
-  convertToCycle(pallete, cycle, &Serial);
+
 
 }
 
 void loop() {
-  singleCycle ();
-  //color_bounce();
+  potentiometer_led_shift_registers();
 }
+
+void potentiometer_led_shift_registers() {
+  // compression factor from potentiometer reading
+
+  int potentiometer_reading = read_analog_input();
+  int compression_factor = 0; //potentiometer_reading; //11; //read_analog_input();
+  int steps_per_cycle = 20; //255 / compression_factor;
+
+  // Serial.print("compression_factor = ");
+  // Serial.print(compression_factor);
+  // Serial.print(", prev_potentiometer_reading = ");
+  // Serial.print(prev_potentiometer_reading);
+  // Serial.print(", first_lap_indicator = ");
+  // Serial.println(first_lap_indicator);
+
+  if (first_lap_indicator == 0) {
+    prev_potentiometer_reading = 0;
+    first_lap_indicator++;
+  }
+
+
+  int cycle[steps_per_cycle][6];
+
+
+  // int potentiometer_reading = read_analog_input();
+  // int compression_factor = potentiometer_reading; //11; //read_analog_input();
+  // int stepsPerCycle = 255 / compression_factor;
+  //int cycle[stepsPerCycle][6];
+
+
+  if (prev_potentiometer_reading != potentiometer_reading) {
+    int cycle[steps_per_cycle][6];
+
+    // Convert it to a cycle
+    convertToCycle(pallete, cycle, &Serial, steps_per_cycle, compression_factor);
+    Serial.print("new cycle def, stepsPerCycle = ");
+    Serial.print(steps_per_cycle);
+    Serial.print(", compression = ");
+    Serial.println(compression_factor);
+  }
+
+  prev_potentiometer_reading = potentiometer_reading;
+
+  // run the cycle 10 times
+  // for (int x = 0; x < 5; x ++) {
+    singleCycle(steps_per_cycle, cycle);
+  // }
+
+}
+
 
 void clearShiftRegisters() {
   // 255 if the off value for an entire shift register
@@ -63,7 +119,6 @@ void clearShiftRegisters() {
   digitalWrite(latchPin, 1);
 
 }
-
 
 void shiftOut(int myDataPin, int myClockPin, int myDataOut[], int arraySize) {
   //**************************************************************//
